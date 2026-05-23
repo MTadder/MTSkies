@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>UAPObservationMod</AssemblyName>
+    <RootNamespace>UAPObservationMod</RootNamespace>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>bin\</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>managed_dlls\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>managed_dlls\UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>managed_dlls\UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>managed_dlls\UnityEngine.AnimationModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>managed_dlls\UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>managed_dlls\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>managed_dlls\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>managed_dlls\UnityEngine.AudioModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>    <Reference Include="Deferred">
+      <HintPath>managed_dlls\Deferred.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TUFX">
+      <HintPath>managed_dlls\TUFX.dll</HintPath>
+      <Private>False</Private>
+    </Reference>  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <MakeDir Directories="$(ProjectDir)GameData\UAPObservationMod\Plugins" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)GameData\UAPObservationMod\Plugins" />
+  </Target>
+</Project>
