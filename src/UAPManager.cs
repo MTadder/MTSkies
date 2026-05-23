@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UAPObservationMod
+namespace MTSkies
 {
     public class UAPManager : MonoBehaviour
     {
@@ -48,12 +48,12 @@ namespace UAPObservationMod
 
         private void Start()
         {
-            Debug.Log("[UAPObservation] UAPManager started.");
+            Debug.Log("[MTSkies] UAPManager started.");
         }
 
         private void Update()
         {
-            float dt = Time.deltaTime;
+            float dt = TimeWarp.deltaTime; // Use TimeWarp.deltaTime to scale with time warp
 
             SpawnManager.Tick(dt);
 
@@ -113,14 +113,14 @@ namespace UAPObservationMod
 
         private void OnVesselChanged(Vessel vessel)
         {
-            Debug.Log("[UAPObservation] Active vessel changed.");
+            Debug.Log("[MTSkies] Active vessel changed.");
             // Behavior could evaluate and despawn if the new vessel is invalid 
             // Currently our active ones will just retarget it locally next Tick()
         }
 
         private void OnSceneChanged(GameScenes scene)
         {
-            Debug.Log("[UAPObservation] Scene transition begun. Cleaning up logic.");
+            Debug.Log("[MTSkies] Scene transition begun. Cleaning up logic.");
             Cleanup();
         }
 
@@ -147,17 +147,29 @@ namespace UAPObservationMod
 
         private void OnStageActivate(int stage)
         {
-            if (SpawnManager != null) SpawnManager.TriggerEventDrivenSpawn(0.2f);
+            SpawnManager?.TriggerEventDrivenSpawn(0.2f);
         }
 
         private void OnCrash(EventReport data)
         {
-            if (SpawnManager != null) SpawnManager.TriggerEventDrivenSpawn(0.6f);
+            SpawnManager?.TriggerEventDrivenSpawn(0.6f);
+            TriggerFleeBehavior();
         }
 
         private void OnCrewKilled(EventReport data)
         {
             if (SpawnManager != null) SpawnManager.TriggerEventDrivenSpawn(0.8f);
+            TriggerFleeBehavior();
+        }
+        
+        private void TriggerFleeBehavior()
+        {
+            foreach (var entity in activeEntities)
+            {
+                entity.CurrentBehavior?.Shutdown(entity);
+                entity.CurrentBehavior = new FleeBehavior();
+                entity.CurrentBehavior.Initialize(entity);
+            }
         }
     }
 }

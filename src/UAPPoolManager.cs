@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UAPObservationMod
+namespace MTSkies
 {
     public class UAPPoolManager
     {

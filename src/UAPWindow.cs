@@ -1,7 +1,7 @@
 using UnityEngine;
 using KSP.UI.Screens;
 
-namespace UAPObservationMod
+namespace MTSkies
 {
     public class UAPWindow : MonoBehaviour
     {
@@ -29,10 +29,15 @@ namespace UAPObservationMod
         {
             if (appLauncherButton == null && ApplicationLauncher.Ready)
             {
-                Texture2D icon = GameDatabase.Instance.GetTexture("UAPObservationMod/icon", false);
+                Texture2D icon = GameDatabase.Instance.GetTexture("MTSkies/icon", false);
                 if (icon == null) 
                 {
-                    icon = GameDatabase.Instance.GetTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advexploration", false);
+                    // Provide a safe fallback so the button always appears even if missing textures
+                    icon = new Texture2D(38, 38, TextureFormat.RGBA32, false);
+                    Color[] pixels = new Color[38 * 38];
+                    for (int i = 0; i < pixels.Length; i++) pixels[i] = Color.cyan;
+                    icon.SetPixels(pixels);
+                    icon.Apply();
                 }
 
                 appLauncherButton = ApplicationLauncher.Instance.AddModApplication(

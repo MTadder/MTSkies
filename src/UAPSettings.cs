@@ -1,16 +1,16 @@
 using UnityEngine;
 
-namespace UAPObservationMod
+namespace MTSkies
 {
     public class UAPSettings
     {
-        public int MaxActiveUaps = 3;
-        public float SpawnProbability = 0.15f;
+        public int MaxActiveUaps = 1;
+        public float SpawnProbability = 0.05f;
         public bool EnableSensorCamera = true;
         public bool EnableAudioArtifacts = true;
         public bool EnableScreenNoise = true;
-        public float DefaultGlowIntensity = 4.0f;
-        public float DefaultSpawnDistance = 2500f;
+        public float DefaultGlowIntensity = 2.0f;
+        public float DefaultSpawnDistance = 6000f;
         
         // Expanded Setting variables
         public float JitterIntensityMultiplier = 1.0f;
@@ -40,11 +40,11 @@ namespace UAPObservationMod
                 if (node.HasValue("BaseFundsReward")) float.TryParse(node.GetValue("BaseFundsReward"), out BaseFundsReward);
                 if (node.HasValue("MaxDespawnDistance")) float.TryParse(node.GetValue("MaxDespawnDistance"), out MaxDespawnDistance);
                 
-                Debug.Log("[UAPObservation] Settings loaded successfully.");
+                Debug.Log("[MTSkies] Settings loaded successfully.");
             }
             else
             {
-                Debug.LogWarning("[UAPObservation] UAP_SETTINGS node not found in GameDatabase! Using defaults for now.");
+                Debug.LogWarning("[MTSkies] UAP_SETTINGS node not found in GameDatabase! Using defaults for now.");
             }
         }
     }

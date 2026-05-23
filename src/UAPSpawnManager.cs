@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UAPObservationMod
+namespace MTSkies
 {
     public class UAPSpawnManager
     {
@@ -58,20 +58,12 @@ namespace UAPObservationMod
 
         private void SpawnRandomEntity()
         {
-            Debug.Log("[UAPObservation] Spawning anomaly from pool.");
+            Debug.Log("[MTSkies] Spawning anomaly from pool.");
             
             UAPEntity entity = manager.Pool.GetEntity();
 
-            // Phase 4: Pick a random behavior
-            int behaviorRoll = UnityEngine.Random.Range(0, 5);
-            switch (behaviorRoll)
-            {
-                case 0: entity.CurrentBehavior = new InterceptorBehavior(); break;
-                case 1: entity.CurrentBehavior = new OrbiterBehavior(); break;
-                case 2: entity.CurrentBehavior = new ShadowBehavior(); break;
-                case 3: entity.CurrentBehavior = new BlinkBehavior(); break;
-                default: entity.CurrentBehavior = new ObserverBehavior(); break;
-            }
+            // All UAPs now spawn far out and begin with extreme-speed Approach 
+            entity.CurrentBehavior = new ApproachBehavior();
             
             // Smart Spawning Logic
             Vessel vessel = FlightGlobals.ActiveVessel;
@@ -81,12 +73,9 @@ namespace UAPObservationMod
             // "Up" direction relative to the planet surface
             Vector3 upDir = (vesselPos - body.position).normalized;
             
-            float spawnDist = manager.Settings.DefaultSpawnDistance;
-            // 20% chance to spawn very far away (up to 50km)
-            if (UnityEngine.Random.value < 0.2f)
-                spawnDist = UnityEngine.Random.Range(15000f, 50000f);
-            else
-                spawnDist = UnityEngine.Random.Range(spawnDist * 0.5f, spawnDist * 2f);
+            // Spawn way out in deep space so they do not "pop" into view. They will travel inward.
+            float minSpawnDist = manager.Settings.MaxDespawnDistance * 0.6f; 
+            float spawnDist = UnityEngine.Random.Range(minSpawnDist, minSpawnDist + 20000f);
 
             Vector3 spawnDir = upDir; // fallback
             for (int i = 0; i < 15; i++)

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UAPObservationMod
+namespace MTSkies
 {
     public class ShadowBehavior : IUAPBehavior
     {
@@ -9,7 +9,7 @@ namespace UAPObservationMod
 
         public void Initialize(UAPEntity entity)
         {
-            Debug.Log("[UAPObservation] ShadowBehavior Initialized.");
+            Debug.Log("[MTSkies] ShadowBehavior Initialized.");
             followDistance = UnityEngine.Random.Range(1500f, 4000f);
         }
 
@@ -43,7 +43,7 @@ namespace UAPObservationMod
 
         public void Shutdown(UAPEntity entity)
         {
-            Debug.Log("[UAPObservation] ShadowBehavior Shutdown.");
+            Debug.Log("[MTSkies] ShadowBehavior Shutdown.");
         }
     }
 }

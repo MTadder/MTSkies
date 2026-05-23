@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
-    <AssemblyName>UAPObservationMod</AssemblyName>
-    <RootNamespace>UAPObservationMod</RootNamespace>
+    <AssemblyName>MTSkies</AssemblyName>
+    <RootNamespace>MTSkies</RootNamespace>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>bin\</OutputPath>
   </PropertyGroup>
@@ -44,10 +44,16 @@
     <Reference Include="TUFX">
       <HintPath>managed_dlls\TUFX.dll</HintPath>
       <Private>False</Private>
-    </Reference>  </ItemGroup>
+    </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>managed_dlls\UnityEngine.ParticleSystemModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <MakeDir Directories="$(ProjectDir)GameData\UAPObservationMod\Plugins" />
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)GameData\UAPObservationMod\Plugins" />
+    <MakeDir Directories="$(ProjectDir)GameData\MTSkies\Plugins" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)GameData\MTSkies\Plugins" />
+    <Copy SourceFiles="MTSkies.version" DestinationFolder="$(ProjectDir)GameData\MTSkies" />
   </Target>
 </Project>

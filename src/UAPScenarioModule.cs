@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UAPObservationMod
+namespace MTSkies
 {
     [KSPScenario(ScenarioCreationOptions.AddToAllGames, GameScenes.FLIGHT, GameScenes.SPACECENTER, GameScenes.TRACKSTATION)]
     public class UAPScenarioModule : ScenarioModule
@@ -32,7 +32,7 @@ namespace UAPObservationMod
                 SensorUnlocked = unlocked;
             }
 
-            Debug.Log($"[UAPObservation] Scenario data loaded. Sightings: {TotalSightings}");
+            Debug.Log($"[MTSkies] Scenario data loaded. Sightings: {TotalSightings}");
         }
 
         public override void OnSave(ConfigNode node)
@@ -42,7 +42,7 @@ namespace UAPObservationMod
             node.SetValue("TotalSightings", TotalSightings.ToString(), true);
             node.SetValue("SensorUnlocked", SensorUnlocked.ToString(), true);
             
-            Debug.Log("[UAPObservation] Scenario data saved.");
+            Debug.Log("[MTSkies] Scenario data saved.");
         }
 
         public void RecordSighting()

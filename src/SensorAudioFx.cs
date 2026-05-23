@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UAPObservationMod
+namespace MTSkies
 {
     public class SensorAudioFx : MonoBehaviour
     {
@@ -34,7 +34,7 @@ namespace UAPObservationMod
 
             if (cameraController.IsActive)
             {
-                if (!staticSource.isPlaying) staticSource.Play();
+                if (staticSource.isActiveAndEnabled && !staticSource.isPlaying) staticSource.Play();
 
                 // Increase static volume if we lose lock, decrease if locked
                 float targetVol = cameraController.HasLock ? 0.05f : 0.2f;

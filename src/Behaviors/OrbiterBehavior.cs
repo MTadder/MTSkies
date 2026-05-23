@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UAPObservationMod
+namespace MTSkies
 {
     public class OrbiterBehavior : IUAPBehavior
     {
@@ -12,7 +12,7 @@ namespace UAPObservationMod
 
         public void Initialize(UAPEntity entity)
         {
-            Debug.Log("[UAPObservation] OrbiterBehavior Initialized.");
+            Debug.Log("[MTSkies] OrbiterBehavior Initialized.");
             orbitRadius = targetOrbitRadius = UnityEngine.Random.Range(1000f, 3000f);
             orbitSpeed = UnityEngine.Random.Range(0.1f, 0.4f);
             currentAngle = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
@@ -42,8 +42,8 @@ namespace UAPObservationMod
 
             Vector3 desiredPosition = vesselPos + new Vector3(x, heightOffset, z);
 
-            // Move the entity smoothly
-            entity.Transform.position = Vector3.Lerp(entity.Transform.position, desiredPosition, deltaTime * 2f);
+            // Move the entity smoothly with exponential decay to avoid rigid snapping during time warp
+            entity.Transform.position = Vector3.Lerp(entity.Transform.position, desiredPosition, 1f - Mathf.Exp(-deltaTime * 0.5f));
             
             // Always face the vessel
             entity.Transform.LookAt(vesselPos);
@@ -51,7 +51,7 @@ namespace UAPObservationMod
 
         public void Shutdown(UAPEntity entity)
         {
-            Debug.Log("[UAPObservation] OrbiterBehavior Shutdown.");
+            Debug.Log("[MTSkies] OrbiterBehavior Shutdown.");
         }
     }
 }

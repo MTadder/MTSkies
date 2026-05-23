@@ -433,9 +433,9 @@ Optional audio should be subtle and limited.
 
 ```text
 GameData/
-└── UAPObservationMod/
+└── MTSkies/
     ├── Plugins/
-    │   └── UAPObservationMod.dll
+    │   └── MTSkies.dll
     ├── Assets/
     │   ├── uap_glow.png
     │   ├── sensor_hud.png

@@ -1,4 +1,4 @@
-namespace UAPObservationMod
+namespace MTSkies
 {
     public interface IUAPBehavior
     {

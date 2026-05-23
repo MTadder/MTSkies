@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UAPObservationMod
+namespace MTSkies
 {
     public class SensorCameraController : MonoBehaviour
     {
@@ -12,6 +12,8 @@ namespace UAPObservationMod
         // Emulated jitter and tracking
         private float zoomLevel = 1.0f;
         private Vector2 trackingError = Vector2.zero;
+        private float trackingTime = 0f;
+        private float nextRewardTime = 1f;
         
         // Post-processing and camera manipulation
         private float originalFOV;
@@ -40,7 +42,7 @@ namespace UAPObservationMod
         public void ToggleCamera()
         {
             IsActive = !IsActive;
-            Debug.Log("[UAPObservation] Sensor Camera Mode: " + IsActive);
+            Debug.Log("[MTSkies] Sensor Camera Mode: " + IsActive);
             
             flightCam = FlightCamera.fetch?.mainCamera;
             if (IsActive && flightCam != null)
@@ -48,7 +50,7 @@ namespace UAPObservationMod
                 originalFOV = flightCam.fieldOfView;
                 if (manager.Settings.EnableScreenNoise)
                 {
-                    TUFXIntegration.ApplySensorProfile();
+                    TUFXIntegration.ApplySensorProfile(flightCam);
                 }
             }
             else if (!IsActive && flightCam != null)
@@ -57,11 +59,14 @@ namespace UAPObservationMod
                 // Reset transform/pixel offset to remove jitter
                 flightCam.transform.localRotation = Quaternion.identity;
                 
+                trackingTime = 0f;
+                nextRewardTime = 1f;
+
                 TUFXIntegration.ClearSensorProfile();
             }
         }
 
-        private void Update()
+        private void LateUpdate()
         {
             // Toggle tracking mode with Alt+U (stand-in hotkey for now)
             if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.U))
@@ -74,11 +79,23 @@ namespace UAPObservationMod
             if (LockedTarget == null || !LockedTarget.Root.activeInHierarchy)
             {
                 FindTarget();
+                if (LockedTarget == null)
+                {
+                    trackingTime = 0f;
+                    nextRewardTime = 1f;
+                }
             }
 
             if (LockedTarget != null)
             {
                 jitterTime += Time.deltaTime;
+                trackingTime += Time.deltaTime;
+
+                if (trackingTime >= nextRewardTime)
+                {
+                    nextRewardTime += 1f;
+                    GiveTrackingReward();
+                }
                 
                 // Emulate tracking jitter
                 trackingError = Vector2.Lerp(trackingError, new Vector2(UnityEngine.Random.Range(-5f, 5f), UnityEngine.Random.Range(-5f, 5f)), Time.deltaTime * 2f);
@@ -88,7 +105,7 @@ namespace UAPObservationMod
                 if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus)) zoomLevel = Mathf.Max(1f, zoomLevel / 2f);
 
                 // Photography feature
-                if (Input.GetKeyDown(KeyCode.Space))
+                if (Input.GetKeyDown(KeyCode.P) || Input.GetKeyDown(KeyCode.Return))
                 {
                     TakePhotograph();
                 }
@@ -99,7 +116,7 @@ namespace UAPObservationMod
                     float targetFOV = originalFOV / zoomLevel;
                     flightCam.fieldOfView = Mathf.Lerp(flightCam.fieldOfView, targetFOV, Time.deltaTime * 10f);
                     
-                    // Shake and jitter via transform rotation instead of projection matrix to preserve Deferred Rendering compatibility
+                    // Shake and jitter computation
                     float jitterMultiplier = manager.Settings.JitterIntensityMultiplier;
                     float jitterX = (Mathf.PerlinNoise(jitterTime * 50f, 0) - 0.5f) * 1.5f * zoomLevel * jitterMultiplier;
                     float jitterY = (Mathf.PerlinNoise(0, jitterTime * 50f) - 0.5f) * 1.5f * zoomLevel * jitterMultiplier;
@@ -111,14 +128,40 @@ namespace UAPObservationMod
                         jitterY *= 5f;
                     }
 
-                    // Apply slight rotational offsets to emulate the panning track error/shake
-                    flightCam.transform.localRotation = Quaternion.Euler(jitterX, jitterY, 0f);
+                    // Auto-aiming tracking system: override camera world rotation to actually LOOK at the UAP
+                    Vector3 lookTarget = LockedTarget.Root.transform.position;
+                    Vector3 lookDir = lookTarget - flightCam.transform.position;
+                    if (lookDir.sqrMagnitude > 1.0f)
+                    {
+                        Quaternion targetRot = Quaternion.LookRotation(lookDir, flightCam.transform.up);
+                        // Apply tracking rotation combined with our simulated jitter
+                        flightCam.transform.rotation = targetRot * Quaternion.Euler(jitterX, jitterY, 0f);
+                    }
                 }
             }
             else if (flightCam != null)
             {
                 flightCam.fieldOfView = Mathf.Lerp(flightCam.fieldOfView, originalFOV, Time.deltaTime * 5f);
+                // Return control to flight camera
                 flightCam.transform.localRotation = Quaternion.Slerp(flightCam.transform.localRotation, Quaternion.identity, Time.deltaTime * 5f);
+            }
+        }
+
+        private void GiveTrackingReward()
+        {
+            if (LockedTarget != null && FlightGlobals.ActiveVessel != null)
+            {
+                if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER || HighLogic.CurrentGame.Mode == Game.Modes.SCIENCE_SANDBOX)
+                {
+                    // Continuous reward: 10% of base value every second while tracking
+                    float scienceReward = (manager.Settings.BaseScienceReward * 0.1f) * zoomLevel;
+                    ResearchAndDevelopment.Instance?.AddScience(scienceReward, TransactionReasons.ScienceTransmission);
+                    
+                    if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
+                    {
+                        Funding.Instance?.AddFunds((manager.Settings.BaseFundsReward * 0.1f) * zoomLevel, TransactionReasons.Progression);
+                    }
+                }
             }
         }
 
@@ -126,7 +169,7 @@ namespace UAPObservationMod
         {
             if (LockedTarget != null && FlightGlobals.ActiveVessel != null)
             {
-                Debug.Log("[UAPObservation] Photograph taken!");
+                Debug.Log("[MTSkies] Photograph taken!");
                 
                 // Reward logic
                 if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER || HighLogic.CurrentGame.Mode == Game.Modes.SCIENCE_SANDBOX)
@@ -140,7 +183,7 @@ namespace UAPObservationMod
                         Funding.Instance?.AddFunds(manager.Settings.BaseFundsReward * zoomLevel, TransactionReasons.Progression);
                     }
                     
-                    Debug.Log($"[UAPObservation] Captured sensor data transmitted! (+{scienceReward:F1} Science)");
+                    Debug.Log($"[MTSkies] Captured sensor data transmitted! (+{scienceReward:F1} Science)");
                 }
             }
         }
@@ -195,6 +238,22 @@ namespace UAPObservationMod
             GUI.Label(new Rect(cx - bracketSize, cy + bracketSize - 5, 20, 20), "L"); // Bottom Left
             GUI.Label(new Rect(cx + bracketSize - 5, cy + bracketSize - 5, 20, 20), "j"); // Bottom Right
             
+            if (LockedTarget != null)
+            {
+                // ROI tracking bars closing in based on visual tracking time
+                float trackingProgress = Mathf.Clamp01(trackingTime / 3f); // Fully closed at 3 seconds
+                float barOffset = Mathf.Lerp(bracketSize, 12f, trackingProgress);
+                
+                // Draw vertical indicator bars
+                GUI.Label(new Rect(cx - barOffset, cy - 10, 20, 20), "|");
+                GUI.Label(new Rect(cx + barOffset - 4, cy - 10, 20, 20), "|");
+                
+                if (trackingProgress >= 1f)
+                {
+                    GUI.Label(new Rect(cx + 25, cy - 25, 50, 20), "LCKD"); 
+                }
+            }
+            
             // Compass N Indicator pointing North relative to the camera
             if (FlightGlobals.ActiveVessel != null && flightCam != null)
             {
@@ -223,7 +282,7 @@ namespace UAPObservationMod
             {
                 float dist = Vector3.Distance(LockedTarget.Transform.position, FlightGlobals.ActiveVessel.transform.position);
                 GUI.Label(new Rect(20, 80, 200, 20), $"RNG: {dist:F1}m");
-                GUI.Label(new Rect(20, 100, 200, 20), "[SPACE] CAPTURE DATA");
+                GUI.Label(new Rect(20, 100, 200, 20), "[P] CAPTURE DATA");
             }
         }
     }

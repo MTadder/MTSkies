@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UAPObservationMod
+namespace MTSkies
 {
     public class BlinkBehavior : IUAPBehavior
     {
@@ -10,7 +10,7 @@ namespace UAPObservationMod
 
         public void Initialize(UAPEntity entity)
         {
-            Debug.Log("[UAPObservation] BlinkBehavior Initialized.");
+            Debug.Log("[MTSkies] BlinkBehavior Initialized.");
             isVisible = true;
             timer = 0f;
             SetNextChangeTime();
@@ -69,7 +69,7 @@ namespace UAPObservationMod
         {
             if (entity.Renderer != null)
             {
-                // Ensure rendered stays enabled when returned to pool
+                // Ensure renderer stays enabled when returned to pool
                 entity.Renderer.enabled = true; 
             }
         }

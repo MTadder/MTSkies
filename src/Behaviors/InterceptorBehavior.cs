@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UAPObservationMod
+namespace MTSkies
 {
     public class InterceptorBehavior : IUAPBehavior
     {
@@ -11,7 +11,7 @@ namespace UAPObservationMod
 
         public void Initialize(UAPEntity entity)
         {
-            Debug.Log("[UAPObservation] InterceptorBehavior Initialized.");
+            Debug.Log("[MTSkies] InterceptorBehavior Initialized.");
             // Starts normal approach
             isBreakingAway = false;
             escapeTimer = 0f;
@@ -66,7 +66,7 @@ namespace UAPObservationMod
         public void Shutdown(UAPEntity entity)
         {
             entity.Renderer.enabled = true; // reset for pool
-            Debug.Log("[UAPObservation] InterceptorBehavior Shutdown.");
+            Debug.Log("[MTSkies] InterceptorBehavior Shutdown.");
         }
     }
 }

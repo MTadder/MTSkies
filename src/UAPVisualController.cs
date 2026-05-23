@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UAPObservationMod
+namespace MTSkies
 {
     public class UAPVisualController : MonoBehaviour
     {
@@ -9,6 +9,7 @@ namespace UAPObservationMod
         private float pulseTimer;
         private Color baseColor;
         private Light uapLight;
+        private ParticleSystem trailParticles;
 
         public void Initialize(MeshRenderer mr, UAPSettings uapSettings)
         {
@@ -19,7 +20,7 @@ namespace UAPObservationMod
             // Add a dynamic light component for intense close-proximity illumination
             uapLight = mr.gameObject.AddComponent<Light>();
             uapLight.type = LightType.Point;
-            uapLight.range = 2000f;
+            uapLight.range = 200f;
             uapLight.intensity = 0f;
             uapLight.enabled = true;
 
@@ -28,18 +29,71 @@ namespace UAPObservationMod
             if (glowShader != null)
             {
                 Material mat = new Material(glowShader);
+                
+                // Create soft particle texture to fix box-like artifacts
+                Texture2D tex = new Texture2D(32, 32, TextureFormat.ARGB32, false);
+                for (int x = 0; x < 32; x++) {
+                    for (int y = 0; y < 32; y++) {
+                        float dx = x - 15.5f; float dy = y - 15.5f;
+                        float d = Mathf.Sqrt(dx*dx + dy*dy) / 15.5f;
+                        float a = Mathf.Clamp01(1f - d);
+                        tex.SetPixel(x, y, new Color(1, 1, 1, a));
+                    }
+                }
+                tex.Apply();
+                mat.mainTexture = tex;
+
                 baseColor = new Color(1f, 1f, 1f, 1f); // White-hot intense glow
                 mat.SetColor("_TintColor", baseColor);
                 renderer.material = mat;
                 uapLight.color = baseColor;
                 
-                // Form a quad-formation (4 emissive bodies flying in unison based on the study)
-                Vector3[] formationOffsets = new Vector3[]
+                // Randomize formations
+                Vector3[] formationOffsets = new Vector3[0];
+                int formationType = UnityEngine.Random.Range(0, 5);
+                float spacing = UnityEngine.Random.Range(30f, 60f);
+
+                switch (formationType)
                 {
-                    new Vector3(40f, 0, 40f),
-                    new Vector3(-40f, 0, 40f),
-                    new Vector3(40f, 0, -40f)
-                };
+                    case 0: // Triangular
+                        formationOffsets = new Vector3[] {
+                            new Vector3(spacing, 0, 0),
+                            new Vector3(spacing / 2f, 0, spacing * 0.866f)
+                        };
+                        break;
+                    case 1: // Quad / Square
+                        formationOffsets = new Vector3[] {
+                            new Vector3(spacing, 0, 0),
+                            new Vector3(0, 0, spacing),
+                            new Vector3(spacing, 0, spacing)
+                        };
+                        break;
+                    case 2: // Line (3 trailing)
+                        formationOffsets = new Vector3[] {
+                            new Vector3(spacing, 0, 0),
+                            new Vector3(-spacing, 0, 0),
+                            new Vector3(spacing * 2f, 0, 0)
+                        };
+                        break;
+                    case 3: // V-Formation / Arrow
+                        formationOffsets = new Vector3[] {
+                            new Vector3(-spacing, 0, -spacing),
+                            new Vector3(spacing, 0, -spacing),
+                            new Vector3(-spacing * 2f, 0, -spacing * 2f),
+                            new Vector3(spacing * 2f, 0, -spacing * 2f)
+                        };
+                        break;
+                    case 4: // Circular / Hexagon
+                        formationOffsets = new Vector3[] {
+                            new Vector3(spacing, 0, 0),
+                            new Vector3(spacing * 0.5f, 0, spacing * 0.866f),
+                            new Vector3(-spacing * 0.5f, 0, spacing * 0.866f),
+                            new Vector3(-spacing, 0, 0),
+                            new Vector3(-spacing * 0.5f, 0, -spacing * 0.866f),
+                            new Vector3(spacing * 0.5f, 0, -spacing * 0.866f)
+                        };
+                        break;
+                }
 
                 foreach (Vector3 offset in formationOffsets)
                 {
@@ -56,6 +110,45 @@ namespace UAPObservationMod
                         satRenderer.material = mat;
                     }
                 }
+
+                // Inject a Particle System to create the requested "dripping/trailing energy" visual spectacle
+                GameObject particleObj = new GameObject("UAP_Trail_FX");
+                particleObj.transform.SetParent(mr.transform, false);
+                trailParticles = particleObj.AddComponent<ParticleSystem>();
+                
+                var main = trailParticles.main;
+                main.duration = 1f;
+                main.loop = true;
+                main.startLifetime = 4f;        // Linger long enough to form a tail
+                main.startSpeed = 0f;           // Particles don't shoot out, they get left behind in world space
+                main.startSize = 25f;           // Quite large blobs that will shrink
+                main.simulationSpace = ParticleSystemSimulationSpace.World;
+                main.gravityModifier = 0.02f;   // The crucial "drip" effect (particles slowly sink/fall as they're left behind)
+                
+                var emission = trailParticles.emission;
+                emission.rateOverTime = 5f + (formationOffsets.Length * 5f); // Scale particles with formation size
+
+                var shape = trailParticles.shape;
+                shape.shapeType = ParticleSystemShapeType.Sphere;
+                shape.radius = spacing + 10f; // Match rough size of the formation bounds
+
+                var psRenderer = trailParticles.GetComponent<ParticleSystemRenderer>();
+                psRenderer.material = mat;      // Shares same high-intensity additive material
+                
+                // Color fade over lifetime
+                var col = trailParticles.colorOverLifetime;
+                col.enabled = true;
+                Gradient grad = new Gradient();
+                grad.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(baseColor, 0f), new GradientColorKey(Color.white, 1f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) }
+                );
+                col.color = grad;
+
+                // Size fade over lifetime
+                var size = trailParticles.sizeOverLifetime;
+                size.enabled = true;
+                size.size = new ParticleSystem.MinMaxCurve(1f, 0f);
             }
         }
 
@@ -63,7 +156,7 @@ namespace UAPObservationMod
         {
             if (renderer == null || settings == null || FlightGlobals.ActiveVessel == null) return;
 
-            pulseTimer += Time.deltaTime;
+            pulseTimer += TimeWarp.deltaTime;
             
             float dist = Vector3.Distance(transform.position, FlightGlobals.ActiveVessel.transform.position);
 
@@ -102,6 +195,13 @@ namespace UAPObservationMod
             if (renderer.material.HasProperty("_TintColor"))
             {
                 renderer.material.SetColor("_TintColor", finalColor);
+            }
+
+            // Sync trail emission/color with current distance fade & pulsation
+            if (trailParticles != null)
+            {
+                var main = trailParticles.main;
+                main.startColor = new Color(finalColor.r, finalColor.g, finalColor.b, distAlpha); // Fade out transparency along with entity
             }
         }
     }
