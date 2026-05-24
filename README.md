@@ -3,8 +3,8 @@
 MTSkies adds rare, mysterious luminous anomalies to Kerbal Space Program. They're designed to be computationally low-cost and cinematic — watch them, track them with the sensor camera, and earn science or funds for good sightings.
 
 ## Showcase
+![](showcase/1.png)
 ![](showcase/2.png)
-![](showcase/3.png)
 
 ## What it does
 - Procedural formations: triangles, quads, V-formation, circular/hexagon, lines
