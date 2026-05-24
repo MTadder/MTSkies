@@ -55,5 +55,6 @@
     <MakeDir Directories="$(ProjectDir)GameData\MTSkies\Plugins" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)GameData\MTSkies\Plugins" />
     <Copy SourceFiles="MTSkies.version" DestinationFolder="$(ProjectDir)GameData\MTSkies" />
+    <Copy SourceFiles="icon.png" DestinationFolder="$(ProjectDir)GameData\MTSkies" />
   </Target>
 </Project>
